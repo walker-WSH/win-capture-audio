@@ -17,6 +17,14 @@ configure_file(
 
 find_package(LibObs REQUIRED)
 
+set(win-capture-audio_HEADERS
+    src/common.h
+    src/format-conversion.h
+    src/audio-capture.h
+    src/obfuscate.h
+    src/window-helpers.h
+    src/audio-capture-helper.h)
+
 set(win-capture-audio_SOURCES
     src/plugin.cpp
     src/audio-capture.cpp
@@ -24,36 +32,10 @@ set(win-capture-audio_SOURCES
     src/window-helpers.cpp
     src/audio-capture-helper.cpp)
 
-add_library(win-capture-audio MODULE ${win-capture-audio_SOURCES})
+add_library(win-capture-audio MODULE ${win-capture-audio_SOURCES} ${win-capture-audio_HEADERS})
 target_link_libraries(win-capture-audio libobs dwmapi psapi ksuser mmdevapi mfplat)
 
 set_property(TARGET win-capture-audio PROPERTY CXX_STANDARD 20)
 target_include_directories(win-capture-audio PUBLIC ${CMAKE_SOURCE_DIR}/deps/wil/include)
 
-add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-    COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
-        "${CMAKE_COMMAND}" -E make_directory
-            "${RELEASE_DIR}/data/obs-plugins/${CMAKE_PROJECT_NAME}"
-            "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
-    )
-
-    COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
-        "${CMAKE_COMMAND}" -E copy_directory
-            "${PROJECT_SOURCE_DIR}/data"
-            "${RELEASE_DIR}/data/obs-plugins/${CMAKE_PROJECT_NAME}"
-    )
-
-    COMMAND if $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>==1 (
-        "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
-            "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
-    )
-
-    COMMAND if $<CONFIG:RelWithDebInfo>==1 (
-        "${CMAKE_COMMAND}" -E copy
-            "$<TARGET_FILE_BASE_NAME:${CMAKE_PROJECT_NAME}>.pdb"
-            "${RELEASE_DIR}/obs-plugins/${ARCH_NAME}"
-    )
-
-    VERBATIM
-)
+install_obs_plugin_with_data(win-capture-audio data)
